@@ -10,6 +10,7 @@ CONFIG += thread
 CONFIG += static
 #CONFIG += openssl-linked
 CONFIG += openssl
+CONFIG += warn_off
 
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets
@@ -29,21 +30,21 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 # workaround for boost 1.58
 DEFINES += BOOST_VARIANT_USE_RELAXED_GET_BY_DEFAULT
 
-BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
-BOOST_INCLUDE_PATH=C:/deps/boost_1_55_0
-BOOST_LIB_PATH=C:/deps/boost_1_55_0/stage/lib
+BOOST_LIB_SUFFIX=
+BOOST_INCLUDE_PATH=/usr/local/opt/boost@1.57/include
+BOOST_LIB_PATH=/usr/local/opt/boost@1.57/lib
 
-BDB_INCLUDE_PATH=C:/deps/db-4.8.30.NC/build_unix
-BDB_LIB_PATH=C:/deps/db-4.8.30.NC/build_unix
+BDB_INCLUDE_PATH=/usr/local/include
+BDB_LIB_PATH=/usr/local/lib
 
-OPENSSL_INCLUDE_PATH=C:/deps/openssl-1.0.11/include
-OPENSSL_LIB_PATH=C:/deps/openssl-1.0.11
+OPENSSL_INCLUDE_PATH=/usr/local/opt/openssl/include
+OPENSSL_LIB_PATH=/usr/local/opt/openssl/lib
 
 MINIUPNPC_INCLUDE_PATH=C:/deps/miniupnpc-1.9
-MINIUPNPC_LIB_PATH=C:/deps/miniupnpc-1.9
+!macx:MINIUPNPC_LIB_PATH=C:/deps/miniupnpc-1.9
 
 QRENCODE_INCLUDE_PATH=C:/deps/qrencode-3.4.4
-QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
+!macx:QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
 
 SECP256K1_INCLUDE_PATH=C:/deps/Secp256k1/include
 SECP256K1_LIB_PATH=C:/deps/Secp256k1/lib
@@ -81,7 +82,7 @@ QMAKE_CXXFLAGS *= -D_FORTIFY_SOURCE=2
 # for extra security on Windows: enable ASLR and DEP via GCC linker flags
 win32:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
 # on Windows: enable GCC large address aware linker flag
-win32:QMAKE_LFLAGS *= -Wl,--large-address-aware -static
+win32:QMAKE_LFLAGS *= -static
 # i686-w64-mingw32
 win32:QMAKE_LFLAGS *= -static-libgcc -static-libstdc++
 
@@ -138,7 +139,8 @@ QMAKE_CLEAN += $$PWD/src/leveldb/libleveldb.a; cd $$PWD/src/leveldb ; $(MAKE) cl
 INCLUDEPATH += src/secp256k1/include
 LIBS += $$PWD/src/secp256k1/src/libsecp256k1_la-secp256k1.o
     # we use QMAKE_CXXFLAGS_RELEASE even without RELEASE=1 because we use RELEASE to indicate linking preferences not -O preferences
-    gensecp256k1.commands = cd $$PWD/src/secp256k1 && ./autogen.sh && ./configure --enable-module-recovery && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\"
+    macx:gensecp256k1.commands = cd $$PWD/src/secp256k1 && ./autogen.sh && ./configure --enable-module-recovery && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) CFLAGS='-mmacosx-version-min=10.10' CXXFLAGS='-mmacosx-version-min=10.10' OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\"
+    !macx:gensecp256k1.commands = cd $$PWD/src/secp256k1 && ./autogen.sh && ./configure --enable-module-recovery && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\"
     gensecp256k1.target = $$PWD/src/secp256k1/src/libsecp256k1_la-secp256k1.o
     gensecp256k1.depends = FORCE
     PRE_TARGETDEPS += $$PWD/src/secp256k1/src/libsecp256k1_la-secp256k1.o
@@ -500,8 +502,8 @@ OTHER_FILES += \
 
 # platform specific defaults, if not overridden on command line
 isEmpty(BOOST_LIB_SUFFIX) {
-    macx:BOOST_LIB_SUFFIX = -mt
-    windows:BOOST_LIB_SUFFIX=-mgw49-mt-s-1_57
+    macx:BOOST_LIB_SUFFIX=-mt
+    windows:BOOST_LIB_SUFFIX=-mt
 }
 
 isEmpty(BOOST_THREAD_LIB_SUFFIX) {
@@ -516,7 +518,8 @@ isEmpty(BDB_LIB_PATH) {
 }
 
 isEmpty(BDB_LIB_SUFFIX) {
-    macx:BDB_LIB_SUFFIX = -4.8
+    #macx:BDB_LIB_SUFFIX = -4.8
+    win32:BDB_LIB_SUFFIX = -6.0
 }
 
 isEmpty(BDB_INCLUDE_PATH) {
@@ -604,7 +607,6 @@ macx:DEFINES += MAC_OSX MSG_NOSIGNAL=0
 macx:ICON = src/qt/res/icons/ferrumcoin.icns
 macx:TARGET = "ferrumcoin-Qt"
 macx:QMAKE_CFLAGS_THREAD += -pthread
-macx:QMAKE_LFLAGS_THREAD += -pthread
 macx:QMAKE_CXXFLAGS_THREAD += -pthread
 macx:QMAKE_INFO_PLIST = share/qt/Info.plist
 
@@ -618,7 +620,7 @@ windows:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32 -
     LIBS += -lgmp
 } else {
     INCLUDEPATH += $$SECP256K1_INCLUDE_PATH
-    LIBS += $$join(SECP256K1_LIB_PATH,,-L,) -lsecp256k1
+    LIBS += $$join(SECP256K1_LIB_PATH,,-L,) -lsecp256k1 -lgmp
 }
 LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
 windows:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX

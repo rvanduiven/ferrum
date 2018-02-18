@@ -1103,7 +1103,7 @@ static CCriticalSection csPathCached;
 const boost::filesystem::path &GetDataDir(bool fNetSpecific)
 {
     namespace fs = boost::filesystem;
-
+#ifndef MAC_OSX
     LOCK(csPathCached);
 
     int nNet = CChainParams::MAX_NETWORK_TYPES;
@@ -1129,7 +1129,11 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
         path /= Params().DataDir();
 
     fs::create_directory(path);
-
+#else
+    fs::path &path = pathCached[0];
+    path = GetDefaultDataDir();
+    fs::create_directory(path);
+#endif
     return path;
 }
 
