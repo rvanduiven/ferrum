@@ -1,0 +1,30 @@
+language: cpp
+
+matrix:
+  include:
+    - os: osx
+      compiler: clang
+      osx_image: xcode7.3
+
+
+script:
+  - chmod +x src/leveldb/build_detect_platform
+  - rm -Rf src/secp256k1/
+  - git clone https://github.com/bitcoin-core/secp256k1 --depth 1 -b master src/secp256k1/
+  - chmod +x src/secp256k1/autogen.sh
+  - PATH="$(brew --prefix qt)/bin:$PATH" qmake CONFIG+=release Ferrumcoin.pro
+  - make -j2 > /dev/null
+  - PATH="$(brew --prefix qt)/bin:$PATH" macdeployqt Ferrumcoin-Qt.app -always-overwrite -dmg
+  - curl --upload-file ./Ferrumcoin-Qt.dmg https://transfer.sh/Ferrumcoin-Qt.dmg
+
+before_install:
+  - eval "${MATRIX_EVAL}"
+
+install:
+  - brew update > /dev/null
+  - brew install qt5
+  - brew link qt5 --force
+  - brew install boost@1.57
+  - brew install qrencode
+  - brew install miniupnpc
+  - brew install berkeley-db
