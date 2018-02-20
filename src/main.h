@@ -17,8 +17,8 @@
 
 class CValidationState;
 
-#define START_MASTERNODE_PAYMENTS_TESTNET 1519268400
-#define START_MASTERNODE_PAYMENTS 1519268400
+#define START_MASTERNODE_PAYMENTS_TESTNET 1519430399
+#define START_MASTERNODE_PAYMENTS 1519430399
 
 static const int64_t DARKSEND_COLLATERAL = (0.01*COIN);
 static const int64_t DARKSEND_POOL_MAX = (4999.99*COIN);
@@ -73,7 +73,7 @@ inline int64_t FutureDrift(int64_t nTime) { return nTime + DRIFT; }
 /** "reject" message codes **/
 static const unsigned char REJECT_INVALID = 0x10;
 
-inline int64_t GetMNCollateral(int nHeight) { return 10000; }
+inline int64_t GetMNCollateral(int nHeight) { return 2500; }
 
 extern CScript COINBASE_FLAGS;
 extern CCriticalSection cs_main;
